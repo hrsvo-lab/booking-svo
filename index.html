@@ -27,6 +27,7 @@
   .sub { color: var(--muted); font-size: 13px; }
   main { max-width: 1180px; margin: 0 auto; padding: 8px 16px 40px;
     display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+  main > * { min-width: 0; }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
   .card h2 { margin: 0 0 12px; font-size: 15px; }
