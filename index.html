@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking Meeting Room SVO</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d1f23; --muted: #6b6f76; --line: #e3e1da;
+    --accent: #1f5f4a; --accent-ink: #ffffff; --warn-bg: #fff4d6; --warn-ink: #7a5600;
+    --err: #b3261e; --ok: #1f7a4a;
+    --r0: #2f6fdb; --r1: #d9822b; --r2: #2a9d6f; --r3: #9b4dca;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141517; --card: #1d1f22; --ink: #ececec; --muted: #9a9ea6; --line: #30333a;
+      --accent: #4fb38e; --accent-ink: #0d1a14; --warn-bg: #3a2f12; --warn-ink: #f2d27a;
+      --err: #ff8a80; --ok: #6fd3a0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 16px 8px; max-width: 1180px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: end; justify-content: space-between; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); font-size: 13px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 8px 16px 40px;
+    display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card h2 { margin: 0 0 12px; font-size: 15px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--ink); font: inherit; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); padding: 8px 12px; }
+  button.primary { width: 100%; margin-top: 14px; background: var(--accent); color: var(--accent-ink);
+    border-color: var(--accent); font-weight: 600; padding: 11px; }
+  button:disabled { opacity: .6; cursor: default; }
+  .msg { margin-top: 10px; font-size: 13px; min-height: 18px; }
+  .msg.ok { color: var(--ok); } .msg.err { color: var(--err); }
+  .warn { background: var(--warn-bg); color: var(--warn-ink); padding: 10px 12px; border-radius: 8px;
+    margin: 0 auto 8px; max-width: 1148px; font-size: 13px; display: none; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat .v { font-size: 22px; font-weight: 650; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .toolbar input { width: auto; }
+  .updated { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .tl { position: relative; overflow-x: auto; }
+  .tl-inner { min-width: 640px; }
+  .tl-head, .tl-row { display: grid; grid-template-columns: 90px 1fr; }
+  .tl-hours { position: relative; height: 20px; font-size: 11px; color: var(--muted); }
+  .tl-hours span { position: absolute; transform: translateX(-50%); }
+  .tl-room { font-size: 13px; font-weight: 600; padding: 12px 8px 12px 0; }
+  .tl-room small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+  .tl-track { position: relative; height: 56px; border-top: 1px solid var(--line);
+    background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+    background-size: calc(100% / 10) 100%; }
+  .blk { position: absolute; top: 6px; bottom: 6px; border-radius: 6px; color: #fff; padding: 4px 6px;
+    font-size: 11px; line-height: 1.25; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--err); z-index: 2; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Booking Meeting Room SVO</h1>
+    <div class="sub">Pilih ruangan, isi form, dan jadwal langsung terlihat oleh semua orang.</div>
+  </div>
+</header>
+<div class="warn" id="warn"></div>
+
+<main>
+  <section class="card">
+    <h2>Booking baru</h2>
+    <form id="f">
+      <label for="room">Ruangan</label>
+      <select id="room"></select>
+      <label for="title">Meeting apa</label>
+      <input id="title" required maxlength="80" placeholder="Contoh: Review campaign Meta Ads">
+      <label for="who">Atasan / dealer</label>
+      <input id="who" required maxlength="60" placeholder="Nama atasan atau dealer">
+      <label for="by">Nama pemesan</label>
+      <input id="by" required maxlength="60" placeholder="Namamu">
+      <label for="date">Tanggal</label>
+      <input id="date" type="date" required>
+      <div class="row2">
+        <div><label for="start">Jam mulai</label><select id="start"></select></div>
+        <div><label for="dur">Durasi</label><select id="dur"></select></div>
+      </div>
+      <button class="primary" id="btn" type="submit">Booking sekarang</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </section>
+
+  <section>
+    <div class="stats">
+      <div class="stat"><div class="v" id="sTotal">–</div><div class="k">Booking di tanggal ini</div></div>
+      <div class="stat"><div class="v" id="sHours">–</div><div class="k">Total jam terpakai</div></div>
+      <div class="stat"><div class="v" id="sNow">–</div><div class="k">Ruang dipakai sekarang</div></div>
+      <div class="stat"><div class="v" id="sNext" style="font-size:16px">–</div><div class="k">Meeting berikutnya</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="toolbar">
+        <button id="prev" type="button" aria-label="Hari sebelumnya">‹</button>
+        <input id="view" type="date">
+        <button id="next" type="button" aria-label="Hari berikutnya">›</button>
+        <button id="today" type="button">Hari ini</button>
+        <span class="updated" id="upd">Memuat…</span>
+      </div>
+      <div class="tl"><div class="tl-inner" id="tl"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Daftar booking</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Jam</th><th>Ruangan</th><th>Meeting</th><th>Atasan/dealer</th><th>Pemesan</th><th></th></tr></thead>
+        <tbody id="list"></tbody>
+      </table></div>
+      <div class="empty" id="empty" style="display:none">Belum ada booking di tanggal ini.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+var API_URL = "https://script.google.com/macros/s/AKfycbyxoLaaYHQe4IbahWNbn7vTiSsAJoZEj0ampjBcINtTA0hqnkGtEDa-OeUO1syw4i3p/exec";
+
+var ROOMS = [
+  { name: "Ruang A", cap: "6 orang",  color: "var(--r0)" },
+  { name: "Ruang B", cap: "8 orang",  color: "var(--r1)" },
+  { name: "Ruang C", cap: "10 orang", color: "var(--r2)" },
+  { name: "Ruang D", cap: "4 orang",  color: "var(--r3)" }
+];
+var OPEN = 8 * 60, CLOSE = 18 * 60, REFRESH_MS = 5000;
+
+var $ = function (id) { return document.getElementById(id); };
+var bookings = [];
+var loading = false;
+
+function pad(n) { return ("0" + n).slice(-2); }
+function hm(m) { return pad(Math.floor(m / 60)) + "." + pad(m % 60); }
+function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function shift(dateStr, days) {
+  var p = dateStr.split("-"); var d = new Date(+p[0], +p[1] - 1, +p[2] + days);
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) {
+  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function nowMin() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+
+function setup() {
+  ROOMS.forEach(function (r, i) {
+    var o = document.createElement("option"); o.value = i; o.textContent = r.name + " (" + r.cap + ")"; $("room").appendChild(o);
+  });
+  for (var m = OPEN; m < CLOSE; m += 30) {
+    var o = document.createElement("option"); o.value = m; o.textContent = hm(m); $("start").appendChild(o);
+  }
+  [30, 60, 90, 120, 150, 180, 210, 240].forEach(function (d) {
+    var o = document.createElement("option"); o.value = d;
+    o.textContent = d < 60 ? d + " menit" : (d / 60) + " jam"; $("dur").appendChild(o);
+  });
+  $("dur").value = 60;
+  $("date").value = todayStr();
+  $("view").value = todayStr();
+  var nm = nowMin(), first = Math.ceil(nm / 30) * 30;
+  if (first >= OPEN && first < CLOSE) $("start").value = first;
+
+  $("view").addEventListener("change", render);
+  $("prev").onclick = function () { $("view").value = shift($("view").value, -1); render(); };
+  $("next").onclick = function () { $("view").value = shift($("view").value, 1); render(); };
+  $("today").onclick = function () { $("view").value = todayStr(); render(); };
+  $("date").addEventListener("change", function () { $("view").value = $("date").value; render(); });
+  $("f").addEventListener("submit", submit);
+
+  if (!API_URL) {
+    $("warn").style.display = "block";
+    $("warn").textContent = "API_URL belum diisi, jadi web belum tersambung ke Google Sheets.";
+  }
+}
+
+function api(method, body) {
+  if (!API_URL) return Promise.reject(new Error("API_URL belum diisi."));
+  var opt = method === "POST"
+    ? { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }
+    : { method: "GET" };
+  var url = method === "GET" ? API_URL + "?t=" + Date.now() : API_URL;
+  return fetch(url, opt).then(function (r) { return r.json(); });
+}
+
+function load() {
+  if (loading || !API_URL) return;
+  loading = true;
+  api("GET").then(function (res) {
+    if (!res.ok) throw new Error(res.error || "Gagal memuat");
+    bookings = res.bookings || [];
+    $("upd").textContent = "Diperbarui jam " + new Date().toLocaleTimeString("id-ID");
+    $("upd").style.color = "";
+    render();
+  }).catch(function (e) {
+    $("upd").textContent = "Gagal memuat (" + e.message + ") — mencoba lagi…";
+    $("upd").style.color = "var(--err)";
+  }).then(function () { loading = false; });
+}
+
+function render() {
+  var day = $("view").value;
+  var list = bookings.filter(function (b) { return b.date === day; })
+    .sort(function (a, b) { return a.start - b.start || a.room - b.room; });
+  var isToday = day === todayStr(), nm = nowMin();
+
+  $("sTotal").textContent = list.length;
+  var mins = list.reduce(function (s, b) { return s + b.dur; }, 0);
+  $("sHours").textContent = (Math.round(mins / 6) / 10).toString().replace(".", ",") + " jam";
+  if (isToday) {
+    var busy = {};
+    list.forEach(function (b) { if (nm >= b.start && nm < b.start + b.dur) busy[b.room] = 1; });
+    $("sNow").textContent = Object.keys(busy).length + " / " + ROOMS.length;
+    var nx = list.filter(function (b) { return b.start >= nm; })[0];
+    $("sNext").textContent = nx ? hm(nx.start) + " · " + ROOMS[nx.room].name : "Tidak ada";
+  } else {
+    $("sNow").textContent = "–";
+    var f = list[0];
+    $("sNext").textContent = f ? "Mulai " + hm(f.start) : "Tidak ada";
+  }
+
+  var span = CLOSE - OPEN, html = '<div class="tl-head"><div></div><div class="tl-hours">';
+  for (var h = OPEN; h <= CLOSE; h += 60) {
+    html += '<span style="left:' + ((h - OPEN) / span * 100) + '%">' + hm(h) + "</span>";
+  }
+  html += "</div></div>";
+  ROOMS.forEach(function (r, i) {
+    html += '<div class="tl-row"><div class="tl-room">' + esc(r.name) + "<small>" + esc(r.cap) + '</small></div><div class="tl-track">';
+    list.filter(function (b) { return b.room === i; }).forEach(function (b) {
+      var left = (b.start - OPEN) / span * 100, w = b.dur / span * 100;
+      html += '<div class="blk" style="left:' + left + "%;width:" + w + "%;background:" + r.color + '" title="' +
+        esc(hm(b.start) + "–" + hm(b.start + b.dur) + " · " + b.title + " · " + b.who) + '">' +
+        esc(hm(b.start) + " " + b.title) + "<br>" + esc(b.who) + "</div>";
+    });
+    if (isToday && nm >= OPEN && nm <= CLOSE) html += '<div class="now" style="left:' + ((nm - OPEN) / span * 100) + '%"></div>';
+    html += "</div></div>";
+  });
+  $("tl").innerHTML = html;
+
+  $("list").innerHTML = list.map(function (b) {
+    return "<tr><td>" + hm(b.start) + "–" + hm(b.start + b.dur) + '</td><td><span class="dot" style="background:' +
+      ROOMS[b.room].color + '"></span>' + esc(ROOMS[b.room].name) + "</td><td>" + esc(b.title) + "</td><td>" +
+      esc(b.who) + "</td><td>" + esc(b.by) + '</td><td><button type="button" data-id="' + esc(b.id) + '">Batalkan</button></td></tr>';
+  }).join("");
+  $("empty").style.display = list.length ? "none" : "block";
+  Array.prototype.forEach.call($("list").querySelectorAll("button[data-id]"), function (btn) {
+    btn.onclick = function () { cancel(btn.getAttribute("data-id"), btn); };
+  });
+}
+
+function submit(ev) {
+  ev.preventDefault();
+  var b = {
+    action: "add", room: +$("room").value, title: $("title").value.trim(), who: $("who").value.trim(),
+    by: $("by").value.trim(), date: $("date").value, start: +$("start").value, dur: +$("dur").value
+  };
+  var msg = $("msg");
+  if (b.start + b.dur > CLOSE) { msg.className = "msg err"; msg.textContent = "Melewati jam tutup 18.00. Kurangi durasi."; return; }
+  var clash = bookings.filter(function (x) {
+    return x.room === b.room && x.date === b.date && b.start < x.start + x.dur && x.start < b.start + b.dur;
+  })[0];
+  if (clash) {
+    msg.className = "msg err";
+    msg.textContent = "Bentrok dengan \"" + clash.title + "\" (" + hm(clash.start) + "–" + hm(clash.start + clash.dur) + ", " + clash.by + ").";
+    return;
+  }
+  $("btn").disabled = true; msg.className = "msg"; msg.textContent = "Menyimpan…";
+  api("POST", b).then(function (res) {
+    if (!res.ok) {
+      var c = res.conflict;
+      throw new Error(c ? "Bentrok dengan \"" + c.title + "\" (" + hm(c.start) + "–" + hm(c.start + c.dur) + ")." : res.error);
+    }
+    bookings.push(res.booking);
+    $("view").value = b.date; render();
+    msg.className = "msg ok"; msg.textContent = "Booking berhasil ✓";
+    $("title").value = ""; $("who").value = "";
+  }).catch(function (e) {
+    msg.className = "msg err";
+    msg.textContent = e.message === "Failed to fetch" ? "Gagal terhubung ke server. Cek deploy Apps Script." : e.message;
+  }).then(function () { $("btn").disabled = false; });
+}
+
+function cancel(id, btn) {
+  if (!confirm("Batalkan booking ini?")) return;
+  btn.disabled = true;
+  api("POST", { action: "cancel", id: id }).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    bookings = bookings.filter(function (b) { return b.id !== id; });
+    render();
+  }).catch(function (e) { alert("Gagal membatalkan: " + e.message); btn.disabled = false; });
+}
+
+setup();
+render();
+load();
+setInterval(function () { if (!document.hidden) load(); }, REFRESH_MS);
+document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+setInterval(render, 60000);
+</script>
+</body>
+</html>
