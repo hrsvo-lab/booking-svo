@@ -57,13 +57,18 @@
   .tl-head, .tl-row { display: grid; grid-template-columns: 90px 1fr; }
   .tl-hours { position: relative; height: 20px; font-size: 11px; color: var(--muted); }
   .tl-hours span { position: absolute; transform: translateX(-50%); }
-  .tl-room { font-size: 13px; font-weight: 600; padding: 12px 8px 12px 0; }
+  .tl-room { font-size: 13px; font-weight: 600; padding: 12px 8px 12px 0;
+    position: sticky; left: 0; z-index: 3; background: var(--card); }
   .tl-room small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
-  .tl-track { position: relative; height: 56px; border-top: 1px solid var(--line);
+  .tl-track { position: relative; height: 80px; border-top: 1px solid var(--line);
     background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
     background-size: calc(100% / 10) 100%; }
   .blk { position: absolute; top: 6px; bottom: 6px; border-radius: 6px; color: #fff; padding: 4px 6px;
-    font-size: 11px; line-height: 1.25; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    font-size: 11px; line-height: 1.3; overflow: hidden; cursor: default;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .blk b, .blk span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .blk b { font-weight: 650; }
+  .blk span { opacity: .95; }
   .now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--err); z-index: 2; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -246,8 +251,10 @@ function render() {
     list.filter(function (b) { return b.room === i; }).forEach(function (b) {
       var left = (b.start - OPEN) / span * 100, w = b.dur / span * 100;
       html += '<div class="blk" style="left:' + left + "%;width:" + w + "%;background:" + r.color + '" title="' +
-        esc(hm(b.start) + "–" + hm(b.start + b.dur) + " · " + b.title + " · " + b.who) + '">' +
-        esc(hm(b.start) + " " + b.title) + "<br>" + esc(b.who) + "</div>";
+        esc(hm(b.start) + "–" + hm(b.start + b.dur) + " · " + b.title + "\nAtasan/dealer: " + b.who + "\nPemesan: " + b.by) + '">' +
+        "<b>" + esc(hm(b.start) + "–" + hm(b.start + b.dur) + " " + b.title) + "</b>" +
+        "<span>Atasan: " + esc(b.who) + "</span>" +
+        "<span>Pemesan: " + esc(b.by) + "</span></div>";
     });
     if (isToday && nm >= OPEN && nm <= CLOSE) html += '<div class="now" style="left:' + ((nm - OPEN) / span * 100) + '%"></div>';
     html += "</div></div>";
